@@ -6,15 +6,15 @@ En esta práctica se trata de instalar dos servidores en dos máquinas virtuales
 
 Para ello se harán dos instalaciones diferentes en cada máquina, desde ahora *m1* y *m2*. En *m1* antes de la instalación se hará una conexión adicional para el adaptador en modo sólo anfitrión para conectarlo ya a la red interna, y en *m2* se hará únicamente la conexión NAT a través de la cual se podrá acceder a Internet a través del dipositivo anfitrión.
 
-![Configuración MV 1](https://raw.githubusercontent.com/adizqpoz/SWAP/tree/master/SWAP/practica1/confswap1.png)
-![Configuración MV 2](https://raw.githubusercontent.com/adizqpoz/SWAP/tree/master/SWAP/practica1/confswap2.png)
+![Configuración MV 1](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica1/confswap1.png)
+![Configuración MV 2](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica1/confswap2.png)
 
 Posteriormente se procede a instalar las dos máquinas, configurando el idioma, el perfil, la red, la instalación de ciertos servicios...
 
 Nosotros avanzamos en todos los pasos sin realizar cambios excepto en estos dos:
 
-![Perfil](https://raw.githubusercontent.com/adizqpoz/SWAP/tree/master/SWAP/practica1/perfilm1.png)
-![Instalación SSH](https://raw.githubusercontent.com/adizqpoz/SWAP/tree/master/SWAP/practica1/ssh.png)
+![Perfil](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica1/perfilm1.png)
+![Instalación SSH](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica1/ssh.png)
 
 Notamos que en esta imagen ya hacemos la instalación de SSH.
 
@@ -37,7 +37,7 @@ service apache2 status
 
 Lo cual nos muestra:
 
-![Estado Apache](https://raw.githubusercontent.com/adizqpoz/SWAP/tree/master/SWAP/practica1/apache.png)
+![Estado Apache](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica1/apache.png)
 
 Y con esto ya tenemos instalada la pila LAMP. Ahora debemos asegurarnos de que ambas máquinas pueden comunicarse.
 
@@ -55,7 +55,7 @@ ifconfig
 
 Y en este caso vemos que todo está correctamente configurado
 
-![Redes M1](https://raw.githubusercontent.com/adizqpoz/SWAP/tree/master/SWAP/practica1/red1.png)
+![Redes M1](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica1/red1.png)
 
 ### Configuración para M2
 
@@ -67,27 +67,27 @@ Esta máquina aún no está conectada a la red interna con el conector sólo-anf
 
 Ahora procedemos a comprobar las redes a las que está conectada M2 con el comando usado en M1, y vemos lo siguiente:
 
-![Redes 2 - Paso 1](https://raw.githubusercontent.com/adizqpoz/SWAP/tree/master/SWAP/practica1/red2.1.png)
+![Redes 2 - Paso 1](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica1/red2.1.png)
 
 Como se puede observar, esta máquina aún no está conectada a la red interna. Ahora debemos revisar el archivo de configuración de la red, el cual está alojado en la ruta */etc/netplan/50-cloud.init.yaml*, y vemos lo siguiente:
 
-![Netplan - Paso 1](https://raw.githubusercontent.com/adizqpoz/SWAP/tree/master/SWAP/practica1/netplan1.png)
+![Netplan - Paso 1](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica1/netplan1.png)
 
 Como vemos, el conector *enp0s8* no está configurado. Lo configuramos del mismo modo que está configurado *enp0s3*.
 
-![Netplan - Paso 2](https://raw.githubusercontent.com/adizqpoz/SWAP/tree/master/SWAP/practica1/netplan2.png)
+![Netplan - Paso 2](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica1/netplan2.png)
 
 Comprobamos y vemos lo siguiente:
 
-![Redes 2 - Paso 2](https://raw.githubusercontent.com/adizqpoz/SWAP/tree/master/SWAP/practica1/red2.2.png)
+![Redes 2 - Paso 2](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica1/red2.2.png)
 
 Vemos que no tiene asignada la IP que le corresponde. Para cambiarla a la que deseamos debemos volver a configurar nuestro archivo de configuración, acabando de esta forma:
 
-![Netplan - Paso 3](https://raw.githubusercontent.com/adizqpoz/SWAP/tree/master/SWAP/practica1/netplan3.png)
+![Netplan - Paso 3](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica1/netplan3.png)
 
 Al verificar observamos que todo está a priori correctamente configurado.
 
-![Redes 2 - Paso 3](https://raw.githubusercontent.com/adizqpoz/SWAP/tree/master/SWAP/practica1/red2.3.png)
+![Redes 2 - Paso 3](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica1/red2.3.png)
 
 ***
 
@@ -112,7 +112,7 @@ ssh adizqpoz@<ip de la máquina complementaria>
 
 Cuando hacemos esto en ambas máquinas vemos el siguiente resultado:
 
-![Resultado SSH satisfactorio](https://raw.githubusercontent.com/adizqpoz/SWAP/tree/master/SWAP/practica1/res_ssh.png)
+![Resultado SSH satisfactorio](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica1/res_ssh.png)
 
 Podemos observar que el servicio ssh funciona como debe.
 
@@ -136,7 +136,7 @@ curl <ip de la máquina complementaria>/ejemplo.html
 
 Ejecutando este comando observamos lo siguiente:
 
-![Resultado curl satisfactorio](https://raw.githubusercontent.com/adizqpoz/SWAP/tree/master/SWAP/practica1/res_curl.png)
+![Resultado curl satisfactorio](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica1/res_curl.png)
 
 Por tanto, el servidor Apache funciona correctamente y podemos dar por concluida esta práctica.
 

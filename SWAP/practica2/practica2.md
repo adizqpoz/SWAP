@@ -72,11 +72,39 @@ Una vez hecho esto, intentamos de nuevo ejecutar el comando anterior y obtenemos
 
 ![Envío copia SCP](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica2/enviocopiascp.png)
 
-Observamos que la transfecencia se realiza con éxito. Sin embargo, es buena práctica verificar que nuestro objetivo se ha cumplido. Por ello, comprobamos en la máquina receptora guiándonos por la fecha de la última actualización, que debe ser en torno a las 18:30 del día 20 de marzo.
+Observamos que la transfecencia se realiza con éxito. Sin embargo, es buena práctica verificar que nuestro objetivo se ha cumplido. Por ello, comprobamos en la máquina receptora guiándonos por la fecha de la última actualización.
 
 ![Recepción copia SCP](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica2/recepcioncopiascp.png)
 
 Como suponíamos tras la anterior imagen, la copia de nuestra carpeta /var/www/ ha sido un éxito.
+
+## 2. Clonar directorios con rsync
+
+A pesar de que aparentemente funcionan bien los dos métodos anteriormente utilizados, para grandes cantidades de información, y para filtrar qué archivos deseamos que se clonen y qué archivos no, una herramienta más óptima para ello es *rsync*.
+
+Se indica cómo instalar el programa en nuestros servidores. Sin embargo, ya lo tenemos instalado, así que esa labor ya no es necesaria.
+
+También se nos indica cambiar el propietario del directorio principal del servidor web, lo cual hemos hecho en el paso anterior para poder realizar correctamente esas tareas, así que lo que nos queda en esta sección es ejecutar el comando necesario para ejecutar nuestra tarea, el cual es el siguiente:
+
+~~~
+rsync -avz -e ssh 192.168.56.101:/var/www/ /var/www/
+~~~
+
+Este comando realiza una transferencia que respeta fielmente la estructura del directorio fuente, incluyendo enlaces simbólicos, y es comprimido para realizar la transferencia de forma más eficiente. Su resultado y comprobación es el siguiente:
+
+![Copia rsync](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica2/copiarsync.png)
+
+Como observamos, todo se ha realizado correctamente.
+
+Aunque no se haga una demostración de esto debido a la simplicidad de nuestro servidor web, merece la pena reseñar una funcionalidad de este programa que se apunta en [el guión de prácticas de esta práctica](https://pradogrado1920.ugr.es/pluginfile.php/441123/mod_resource/content/1/P2_guion.pdf).
+
+Esta funcionalidad es la de omitir la copia de ciertos archivos o subdirectorios. Es útil para no realizar la copia de logs del servidor web, que son datos individuales de cada servidor, y que deben ser revisados por separado. El ejemplo de comando que se expone es el siguiente:
+
+~~~
+rsync -avz --delete --exclude=\*\*/stats --exclude=\*\*/error --exclude=\*\*/files/pictures -e ssh maquina1:/var/www/ /var/www/
+~~~
+
+Siempre que se desee alguna otra funcionalidad siempre se puede consultar el manual.
 
 ***
 

@@ -122,7 +122,7 @@ El método utilizado para el cifrado de las claves será el método RSA, ya que 
 
 El resultado del uso de este comando es el siguiente:
 
-![Generar claves](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica2/generarpubpriv.png)
+![Generar claves](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica2/generapubpriv.png)
 
 Posteriormente, copiaremos la clave pública con un comando específico para esta labor, que simplifica significativamente la ejecución de la orden respecto a los métodos de copia de archivos anteriormente mostrados en este documento. El comando mencionado es el siguiente:
 

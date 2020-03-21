@@ -150,6 +150,28 @@ Como podemos observar, por defecto ya se impide el acceso al root mediante contr
 
 Por otro lado, como ya sabíamos, se puede acceder a M1 mediante contraseña, y esto también puede deshabilitarse de la misma manera que en la opción anterior. En caso de que necesitemos que obtenga M1 una nueva clave pública de otro servidor en el futuro, debemos volver a habilitar esa opción. Por ese motivo, por el momento, no vamos a cambiar esa opción. El momento adecuando sería cuando el sistema esté completo, a falta de las posibles mejoras. Cuando se necesite conectar alguna máquina nueva, volveremos a habilitar el acceso mediante contraseña, y una vez transferida la clave pública, se volvería a deshabilitar el acceso al servidor mediante contraseña.
 
+Cada vez que realicemos un cambio en este archivo debemos reiniciar ssh mediante la siguiente orden:
+
+~~~
+service sshd restart
+~~~
+
+## 4. Automatización de tareas
+
+El motivo por el que habilitamos un sistema de claves pública/privada es porque el servidor puede encargarse por sí solo de mantener su información actualizada, y si hemos de introducir una contraseña cada vez que el sistema se actualice, la automatización de esta acción es baja.
+
+Por ello, usaremos el demonio *cron*, cuyo cometido es lanzar procesos automáticamente, sea en un momento determinado, o periódicamente.
+
+Para ello, debemos modificar el archivo /etc/crontab/ agregando una nueva línea al mismo. Como lo que deseamos es que cada hora se ejecute el comando *rsync -avz 192.168.56.101:/var/www/ /var/www/*, para hacer una copia desde M1 hasta M2, insertaremos la siguiente línea:
+
+![Modificación de /etc/crontab](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica2/crontab.png)
+
+Esperamos hasta que comience la siguiente hora y comprobamos que el comando se ha ejecutado al comenzar la hora buscando al final del archivo */var/log/syslog*, que contiene los logs del sistema.
+
+![Comprobación de sincronización automática](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica2/compruebacron.png)
+
+Como podemos observar, el comando se ha ejecutado correctamente. Con esto ya hemos cumplido con el objetivo de esta práctica, poder sincronizar periódicamente de manera automática el contenido del servidor web M2 con el de M1.
+
 ***
 
 Autor: Adrián Izquierdo Pozo

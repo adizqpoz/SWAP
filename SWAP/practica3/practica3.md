@@ -71,13 +71,15 @@ Para el balanceador NGINX obtenemos lo siguiente:
 
 ![Comprobación reparto de carga nginx](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica3/nginxbenchmarktop.png)
 
-![Datos benchmark nginx](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica3/nginxbenchmarktop.png)
+![Datos benchmark nginx](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica3/nginxbenchmarkdata.png)
 
 Y para el balanceador HAProxy obtenemos los siguientes datos:
 
 ![Comprobación reparto de carga haproxy](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica3/haproxybenchmarktop.png)
 
-![Datos benchmark haproxy](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica3/haproxybenchmarktop.png)
+![Datos benchmark haproxy](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica3/haproxybenchmarkdata.png)
+
+Como vemos, al parecer HAProxy es un balanceador de carga más eficiente que NGINX, con lo cual, en principio, preferiremos el uso del primero.
 
 ***
 

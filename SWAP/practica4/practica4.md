@@ -94,6 +94,18 @@ El estado en el que queda nuestro firewall es el siguiente:
 
 ![Configuración final iptables](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica4/conffirewallfinal.png)
 
+Ahora haremos que nuestro script se ejecute cada vez que se reinicie nuestra máquina. Para ello utilizaremos cron, la herramienta que utiliamos en la práctica 2 para automatizar la replicación de contenidos de una máquina maestra a una máquina esclava.
+
+Para ello existe una serie de parámetros que podemos utilizar en las reglas de cron en lugar de los parámetros temporales que conocemos para ejecutar las mismas tras un determinado evento. 
+
+Para nuestro caso la regla que utilizamos es la siguiente:
+
+~~~
+@reboot root /home/adizqpoz/fiirewall.sh
+~~~
+
+Y posteriormente reiniciamos el demonio cron, reiniciamos la máquina y comprobamos cómo tras iniciarla las reglas están definidas en nuestro cortafuegos.
+
 Por último, comprobaremos que el firewall nos permite realizar las acciones que deseamos:
 
 ![Uso SSH tras configuración de iptables](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica4/sshpostfirewall.png)

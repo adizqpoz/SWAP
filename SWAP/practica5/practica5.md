@@ -1,4 +1,4 @@
-# Práctica 4 SWAP
+# Práctica 5 SWAP
 
 El objetivo de esta práctica es, tal como hemos hecho con las páginas que servimos en nuestra granja web, tener nuestra base de datos replicada en varias máquinas virtuales. 
 
@@ -12,110 +12,92 @@ Los pasos para crear la base de datos son los siguientes:
 
 1. Definir el diseño de nuestra base de datos y su paso a tablas correspondiente. Este paso no está en las competencias de esta asignatura, y ya hemos decidido nuestra base de datos.
 
-2. Crear la base de datos.
+2. Entrar como administrador a la terminal de MySQL.
 
+3. Crear la base de datos.
 
+4. Selecionar nuestra base de datos.
 
-### 1.1. Configuración
+5. Crear la(s) tabla(s).
 
-Para configurar SSL debemos en primer lugar habilitar en el servidor Apache el protocolo SSL, que nos permitirá firmar y cifrar nuestro sitio web. Para ello utilizamos el siguiente comando:
+6. Insertar los datos.
 
-~~~
-sudo a2enmod ssl
-~~~
+Podemos también en cada momento comprobar nuestras tablas, tuplas y atributos para asegurarnos de que lo hemos hecho correctamente.
 
-Y posteriormente reiniciamos Apache para hacer efectivos los cambios.
+![Creación base de datos 1](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/database1.png)
 
-![Configuración Apache SSL](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica4/a2enmodcorrecto.png)
+![Creación base de datos 2](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/database2.png)
 
-A continuación creamos nuestra clave y certificado para nuestro sitio web. Sin embargo, los navegadores detectarán nuestra firma como insegura, dado que no la ha validado ninguna entidad certificadora. Aún así, por motivos didácticos, crearemos nuestro propio certificado digital con OpenSSL.
+Con esto ya tenemos nuestra base de datos preparada.
 
-Para ello, en el directorio /etc/apache2 debemos crear un nuevo subdirectorio llamado ssl, en el cual guardaremos la clave y certificado que se generarán. Posteriormente utilizaremos el siguiente comando para generar la clave y certificado:
+## 2. Replicado de bases de datos
 
-~~~
-sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/apache2/ssl/apache.key -out /etc/apache2/ssl/apache.crt
-~~~
+Aquí, tal como hicimos para los servidores web, se expondrá cómo replicar nuestra base de datos de forma manual y de forma automática.
 
-![Firma SSL](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica4/firmassl.png)
+### 2.1. Replicado manual
 
-Tras rellenar el formulario con los datos pertinentes configuramos Apache para indicarle dónde están el certificado y la clave que se han de utilizar para servir una página HTTPS, reiniciamos Apache y comprobamos que podemos servir una de nuestras páginas mediante el protocolo citado:
+Para realizar el replicado de datos de forma manual utilizaremos la herramienta mysqldump, y scp para copiar los datos replicados a la otra máquina.
 
-![Certificado](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica4/certificado.png)
-
-Para terminar, copiaremos mediante el comando SCP utilizado en la práctica 2 para copiar las claves de nuestro certificado a M2 y a M3, configuramos Apache en M2 de forma idéntica a M1, y configuramos M3 para que redireccione las peticiones HTTPS de igual forma que hicimos con HTTP en la práctica 3, pero indicando que utilizamos el protocolo SSL, que escuchamos el puerto 443, puerto por defecto en el que se escuchan las peticiones HTTPS, y le indicamos la ruta de los archivos recibidos por SCP.
-
-Por último, comprobamos que nuestra infraestructura puede servir páginas HTTPS de forma satisfactoria:
-
-![Comprobación HTTPS granja web](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica4/sshtodos.png)
-
-## 2. iptables
-
-iptables es una herramienta de firewall nativa de los sistemas Linux que nos permite controlar qué tipo de tráfico pueden aceptar nuestras máquinas servidoras. Esta herramienta se configura mediante una serie de reglas que se aplican a nuestro cortafuegos.
-
-En primer lugar limpiaremos todas las reglas que tengamos en iptables para asegurarnos de que las reglas que vamos a añadir no interactúan con otras reglas que no controlamos en este momento. Para ello utilizamos las siguientes reglas:
+Para realizar la copia, en primer lugar bloqueamos los accesos a la base de datos para así no sufrir anomalías a la hora de realizarla. Después utilizamos la siguiente orden:
 
 ~~~
-iptables -F
-iptables -X 
-iptables –t nat -F
-iptables –t nat -X
-iptables –t mangle -F
-iptables –t mangle -X 
-iptables -P INPUT ACCEPT
-iptables -P OUTPUT ACCEPT
+mysqldump <\base de datos> -u root -p > <\archivo de destino>
 ~~~
 
-Con ello tenemos una configuración por defecto que acepta todas las peticiones.
+Por último, desbloqueamos el acceso a tablas.
 
-![Configuración por defecto iptables](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica4/iptableslimpio.png)
+![Creando la copia](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/preparacopia.png)
 
-Posteriormente denegamos todo tráfico de información para posteriormente definir las excepciones de tráfico que permitiremos que entre y salga de nuestro servidor:
+Posteriormente usamos SCP para copiar la base de datos, creamos la base de datos en M2 y volcamos la copia de seguridad
 
-~~~
-iptables -P INPUT DROP
-iptables -P OUTPUT DROP
-iptables -P FORWARD DROP
-~~~
+![Enviando la copia](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/copiadatabase.png)
 
-![Tráfico denegado iptables](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica4/iptablesbloqueatodo.png)
+Y por último comprobamos que todo ha ido bien.
 
-A continuación, para perimtir el tráfico de los servicios que utilizan nuestros servidores debemos definir un conjunto de reglas. En concreto vamos a permitir:
+![Enviando la copia](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/compruebacopia.png)
 
-	- Accesos desde localhost
-	- Acceso y salida de SSH desde los equipos de nuestra granja web
-	- Acceso y salida de peticiones HTTP
-	- Acceso y salida de peticiones HTTPS
-	
-Además, crearemos un script que nos permita tener el firewall configurado desde el momento en el que encendemos nuestros servidores. 
+### 2.1. Replicado automático
 
-![Script configuración iptables](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica4/scriptfirewall.png)
+El problema del método anterior es que en cada sincronización se necesita la acción de un administrador. Esto quizá podría automatizarse con cron, pero MySQL ya proporciona un demonio que permite la sincronización de las bases de datos de ambas máquinas **en tiempo real**.
 
-El estado en el que queda nuestro firewall es el siguiente:
+De este modo podemos obtener una arquitectura *maestro-esclavo* en la que cuando en una de las máquinas se actualiza la base de datos, automáticamente se actualizará en la otra, o una arquitectura *maestro-maestro* en la cual esta relación es bidireccional, es decir, independientemente de en qué máquina se realicen los cambios, las dos máquinas estarán actualizadas en todo momento.
 
-![Configuración final iptables](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica4/conffirewallfinal.png)
+Para ello debemos configurar el servicio de MySQL de la siguiente forma:
 
-Ahora haremos que nuestro script se ejecute cada vez que se reinicie nuestra máquina. Para ello utilizaremos cron, la herramienta que utiliamos en la práctica 2 para automatizar la replicación de contenidos de una máquina maestra a una máquina esclava.
+- Hacemos que el servidor pueda escuchar a otras máquinas que no sean *localhost*.
 
-Para ello existe una serie de parámetros que podemos utilizar en las reglas de cron en lugar de los parámetros temporales que conocemos para ejecutar las mismas tras un determinado evento. 
+- Definimos el archivo de log de errores y del sistema.
 
-Para nuestro caso la regla que utilizamos es la siguiente:
+- Definimos el identificador del servidor
 
-~~~
-@reboot root /home/adizqpoz/fiirewall.sh
-~~~
+![Configurando el servidor SQL 1](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/confmastersql1.png)
 
-Y posteriormente reiniciamos el demonio cron, reiniciamos la máquina y comprobamos cómo tras iniciarla las reglas están definidas en nuestro cortafuegos.
+![Configurando el servidor SQL 2](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/confmastersql2.png)
 
-Por último, comprobaremos que el firewall nos permite realizar las acciones que deseamos:
+Posteriormente hacemos lo mismo en la máquina esclava, y una vez hecho esto, comenzamos a activar el demonio que nos permitirá construir la arquitectura maestro-esclavo.
 
-![Uso SSH tras configuración de iptables](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica4/sshpostfirewall.png)
+Para ello creamos un usuario que permita que el esclavo pueda acceder a los datos del maestro, darle permisos, bloquear la base de datos, revisar los datos que identifican al maestro; y en el esclavo introducimos los datos para comunicarnos con el maestro, y establecemos la conexión.
 
-![Acceso web tras configuración de iptables](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica4/accesowebpostfirewall.png)
+![Configuración maestro](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/comandosmastersql.png)
 
-En este punto concluimos la práctica, a pesar de que es posible profundizar algo más en el uso del cortafuegos para toda nuestra granja web, de forma que nuestras máquinas finales sólo reciban peticiones web del balanceador, y el balanceador responda a las peticiones web, y redirijan el tráfico a las máquinas servidoras finales.
+![Configuración esclavo](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/comandosslavesql.png)
+
+Comprobamos que todo está en orden:
+
+![Arquitectura correcta](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/slavem2ok.png)
+
+![Prueba maestro-esclavo](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/pruebamasterslave.png)
+
+Ahora, si queremos una arquitectura maestro-maestro debemos repetir los pasos, pero invirtiendo los papeles de ambas máquinas. Así ambas máquinas son maestras y esclavas a la vez.
+
+![Arquitectura correcta](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/slavem1ok.png)
+
+![Prueba maestro-esclavo](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/pruebamastermaster.png)
+
+Para realizar esta práctica, por simplicidad, se ha inhabilitado el firewall. Si deseásemos utilizarlo, deberíamos añadir reglas para desbloquear el puerto 3306 tanto para entrada como para salida de datos.
 
 ***
 
 Autor: Adrián Izquierdo Pozo
 
-Si desea ver el archivo Markdown puede verlo [en mi repositorio de Github](https://github.com/adizqpoz/SWAP/blob/master/SWAP/practica4/practica4.md)
+Si desea ver el archivo Markdown puede verlo [en mi repositorio de Github](https://github.com/adizqpoz/SWAP/blob/master/SWAP/practica5/practica5.md)

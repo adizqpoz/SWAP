@@ -1,103 +1,82 @@
-# Práctica 5 SWAP
+# Práctica 6 SWAP
 
-El objetivo de esta práctica es, tal como hemos hecho con las páginas que servimos en nuestra granja web, tener nuestra base de datos replicada en varias máquinas virtuales. 
+El objetivo de esta práctica es crear un servidor NFS en el que se puedan almacenar y compartir datos. El fin último de esto es que podamos tener las bases de datos de la granja web en nuestro servidor NFS, y que los servidores web se comuniquen con el mismo para recibir los datos.
 
-En este ejemplo usaremos M1 y M2, pero **no necesariamente deben estar en las mismas máquinas donde tenemos nuestras páginas web**, sino que podemos tener, por ejemplo, un cluster de máquinas en las que se alojan las bases de datos.
+Al acabar esta práctica sabemos tener servidores dedicados al balanceo de carga, servidores dedicados a servir los sitios web y servidores que almacenan las bases de datos que utilizan nuestros sitios web, y todo ello correctamente configurado. Con estos conocimientos somos capaces de crear una granja web de forma escalable, ya que si deseamos mayor capacidad, simplemente debemos adquirir y crear más máquinas, además de añadirlas a las distintas configuraciones de seguridad o de replicado de datos.
 
-## 1. Creación de la base de datos
+## 1. Creación del servidor NFS
 
-En nuestro caso, haremos una base de datos MySQL muy simple, pero que nos será útil para realizar esta práctica. Poseerá una única tabla, sin clave primaria definida.
+Para crear nuestro servidor NFS debemos crear una nueva máquina virtual al igual que creamos las otras máquinas, con un adaptador NAT y un adaptador sólo-anfitrión, el cual tiene una dirección IP estática, que en este caso será la 192.168.56.104.
 
-Los pasos para crear la base de datos son los siguientes:
+Posteriormente instalaremos el servicio NFS, tanto para servidor como para cliente, y rpcbind, dado que es necesario para que los servidores web puedan acceder de forma remota.
 
-1. Definir el diseño de nuestra base de datos y su paso a tablas correspondiente. Este paso no está en las competencias de esta asignatura, y ya hemos decidido nuestra base de datos.
+Posteriormente lo que hacemos es crear el directorio que tenemos pensado compartir a nuestros servidores web. En este caso serán simples archivos de texto, pero se puede aplicar a estructuras de datos más complejas de ser necesario.
 
-2. Entrar como administrador a la terminal de MySQL.
+![Creación directorio compartido](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica6/dircompartido.png)
 
-3. Crear la base de datos.
+Ahora damos permiso para que los dos servidores web puedan acceder a nuestra carpeta compartida, y al reiniciar el servicio todo debe estar correcto.
 
-4. Selecionar nuestra base de datos.
+![NFS ok](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica6/nfsservicestatus.png)
 
-5. Crear la(s) tabla(s).
+## 2. Configuración de los clientes
 
-6. Insertar los datos.
+En este apartado lo que debemos hacer es configurar a los servidores web para que puedan acceder a nuestro servidor nfs mediante una carpeta compartida. 
 
-Podemos también en cada momento comprobar nuestras tablas, tuplas y atributos para asegurarnos de que lo hemos hecho correctamente.
+Para ello, instalamos el cliente NFS y rpcbind. Posteriormente, en una ruta cualquiera, en nuestro caso, el home de nuestro usuario, creamos una carpeta *datos*, la cual será la carpeta compartida. Además, damos permiso a todos los usuarios.
 
-![Creación base de datos 1](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/database1.png)
+Posteriormente, montamos la carpeta exportada por el servidor en el cliente, y comprobamos que todo funciona correctamente.
 
-![Creación base de datos 2](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/database2.png)
+![Prueba carpeta compartida](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica6/pruebacarpetacompartida.png)
 
-Con esto ya tenemos nuestra base de datos preparada.
+Sin embargo, cuando montamos la carpeta no se trata de un cambio permanente en el sistema. Por tanto, debemos añadir una línea en el archivo /etc/fstab, el cual controla el sistema de montaje de dispositivos, para montar la carpeta compartida por el servidor NFS.
 
-## 2. Replicado de bases de datos
+![Configuración para montar NFS automátcamente](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica6/confnfsauto.png)
 
-Aquí, tal como hicimos para los servidores web, se expondrá cómo replicar nuestra base de datos de forma manual y de forma automática.
+Tras ello ya no hemos de preocuparnos por montar manualmente la carpeta compartida cada vez que arranquemos el sistema.
 
-### 2.1. Replicado manual
+### 3. Seguridad en el servidor NFS
 
-Para realizar el replicado de datos de forma manual utilizaremos la herramienta mysqldump, y scp para copiar los datos replicados a la otra máquina.
+En este apartado asumimos que los servidores web no tienen el cortafuegos habilitado. En un sistema real, cada uno de los cortafuegos de los servidores web deben poder enviar y recibir peticiones por los puertos que se utilizan para hacer posible el sistema NFS, los cuales enumeraremos posteriormente.
 
-Para realizar la copia, en primer lugar bloqueamos los accesos a la base de datos para así no sufrir anomalías a la hora de realizarla. Después utilizamos la siguiente orden:
+En primer lugar, utilizamos las reglas necesarias para denegar todo tráfico entrante, y aceptar las conexiones establecidas y relacionadas.
+
+Posteriormente debemos tener en cuenta los servicios que se utilizan:
+
+- nfs: utiliza el puerto 2049 para tcp y udp.
+- portmapper: utiliza el puerto 111 para tcp y udp
+- mountd: por defecto utiliza puertos dinámicos. Para fijar un puerto para este servicio debemos modificar una línea en el archivo /etc/defaults/nfs-kernel-server, para que escuche específicamente el puerto 2000, por ejemplo. Es decir, debemos tener una línea tal que así:
 
 ~~~
-mysqldump <\base de datos> -u root -p > <\archivo de destino>
+RPCMOUNTDOPTS="--manage-gids -p 2000"
 ~~~
 
-Por último, desbloqueamos el acceso a tablas.
+![Configuración para fijar el puerto mountd](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica6/confmountd.png)
 
-![Creando la copia](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/preparacopia.png)
+- nlockmgr: es parte de un módulo del kernel. Debemos crear un archivo de configuracón en la carpeta /etc/sysctl.d/ donde habilitaremos para este servicio el puerto 2001 para tcp y 2002 para udp:
 
-Posteriormente usamos SCP para copiar la base de datos, creamos la base de datos en M2 y volcamos la copia de seguridad
+~~~
+fs.nfs.nlm_tcpport = 2001
+fs.nfs.nlm_udpport = 2002
+~~~
 
-![Enviando la copia](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/copiadatabase.png)
+Posteriormente lanzamos el nuevo archivo de configuración, y reiniciamos el servidor NFS.
 
-Y por último comprobamos que todo ha ido bien.
+Ahora será útil comprobar que utilizamos los puertos que hemos fijado con el comando rpcinfo -p server:
 
-![Enviando la copia](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/compruebacopia.png)
+![Puertos fijados para los servicios de NFS](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica6/portservicesnfs.png)
 
-### 2.1. Replicado automático
+Sabiendo esto, ya podemos configurar correctamente el tráfico que puede entrar, no salir. Determinamos de dónde puede venir el tráfico TCP y UDP y sus puertos con las dos últimas reglas de este script:
 
-El problema del método anterior es que en cada sincronización se necesita la acción de un administrador. Esto quizá podría automatizarse con cron, pero MySQL ya proporciona un demonio que permite la sincronización de las bases de datos de ambas máquinas **en tiempo real**.
+![Firewall de NFS](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica6/conffirewallm4.png)
 
-De este modo podemos obtener una arquitectura *maestro-esclavo* en la que cuando en una de las máquinas se actualiza la base de datos, automáticamente se actualizará en la otra, o una arquitectura *maestro-maestro* en la cual esta relación es bidireccional, es decir, independientemente de en qué máquina se realicen los cambios, las dos máquinas estarán actualizadas en todo momento.
+Este script, tal como hicimos en la práctica 4, lo ejecutaremos en cada arranque con el demonio cron.
 
-Para ello debemos configurar el servicio de MySQL de la siguiente forma:
+Tras reiniciar, realizamos la prueba de que todo funciona correctamente creando un archivo en la carpeta compartida desde M4:
 
-- Hacemos que el servidor pueda escuchar a otras máquinas que no sean *localhost*.
-
-- Definimos el archivo de log de errores y del sistema.
-
-- Definimos el identificador del servidor
-
-![Configurando el servidor SQL 1](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/confmastersql1.png)
-
-![Configurando el servidor SQL 2](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/confmastersql2.png)
-
-Posteriormente hacemos lo mismo en la máquina esclava, y una vez hecho esto, comenzamos a activar el demonio que nos permitirá construir la arquitectura maestro-esclavo.
-
-Para ello creamos un usuario que permita que el esclavo pueda acceder a los datos del maestro, darle permisos, bloquear la base de datos, revisar los datos que identifican al maestro; y en el esclavo introducimos los datos para comunicarnos con el maestro, y establecemos la conexión.
-
-![Configuración maestro](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/comandosmastersql.png)
-
-![Configuración esclavo](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/comandosslavesql.png)
-
-Comprobamos que todo está en orden:
-
-![Arquitectura correcta](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/slavem2ok.png)
-
-![Prueba maestro-esclavo](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/pruebamasterslave.png)
-
-Ahora, si queremos una arquitectura maestro-maestro debemos repetir los pasos, pero invirtiendo los papeles de ambas máquinas. Así ambas máquinas son maestras y esclavas a la vez.
-
-![Arquitectura correcta](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/slavem1ok.png)
-
-![Prueba maestro-esclavo](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica5/pruebamastermaster.png)
-
-Para realizar esta práctica, por simplicidad, se ha inhabilitado el firewall. Si deseásemos utilizarlo, deberíamos añadir reglas para desbloquear el puerto 3306 tanto para entrada como para salida de datos.
+![Prueba de NFS tras el firewall](https://raw.githubusercontent.com/adizqpoz/SWAP/master/SWAP/practica6/pruebafirewallnfs.png)
 
 ***
 
 Autor: Adrián Izquierdo Pozo
 
-Si desea ver el archivo Markdown puede verlo [en mi repositorio de Github](https://github.com/adizqpoz/SWAP/blob/master/SWAP/practica5/practica5.md)
+Si desea ver el archivo Markdown puede verlo [en mi repositorio de Github](https://github.com/adizqpoz/SWAP/blob/master/SWAP/practica6/practica6.md)
